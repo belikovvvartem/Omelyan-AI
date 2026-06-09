@@ -91,6 +91,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e1e28;border:1px solid rgba(239,68,68,.3);color:#fca5a5;font-size:.83rem;font-weight:500;padding:12px 20px;border-radius:var(--rs);max-width:calc(100vw - 40px);text-align:center;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;z-index:999;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
+/* PROVIDER SELECTOR */
+.provider-wrap{margin-top:20px}
+.provider-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.provider-tabs{display:flex;gap:8px}
+.provider-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 10px;border-radius:var(--rs);border:1px solid var(--border);background:var(--s1);cursor:pointer;transition:all .2s;font-size:.82rem;font-weight:600;color:var(--muted);font-family:var(--font)}
+.provider-tab:hover{border-color:rgba(124,58,237,.4);color:var(--text)}
+.provider-tab.active{border-color:var(--purple);background:rgba(124,58,237,.12);color:var(--purple-l)}
+.provider-tab svg{flex-shrink:0;opacity:.7}
+.provider-tab.active svg{opacity:1}
+.provider-note{font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.5;padding:0 2px}
+
 @media(min-width:560px){.page{padding:0 24px 60px}.prod-img{width:96px;height:96px}}
 </style>
 </head>
@@ -154,6 +165,7 @@ const db  = getDatabase(app);
 let product     = null;
 let roomFile    = null;
 let roomDataUrl = null;
+let aiProvider  = 'openai'; // 'openai' | 'ideogram'
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -189,6 +201,24 @@ async function fetchB64(url) {
     fr.onload = e => res(e.target.result.split(',')[1]);
     fr.onerror = rej;
     fr.readAsDataURL(blob);
+  });
+}
+
+function resizeToBlob(dataUrl, maxPx) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else       { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      c.toBlob(resolve, 'image/png');
+    };
+    img.src = dataUrl;
   });
 }
 
@@ -256,6 +286,21 @@ function renderPage() {
     </div>
     <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
 
+    <div class="provider-wrap" id="providerWrap">
+      <p class="provider-label">AI-провайдер</p>
+      <div class="provider-tabs">
+        <button class="provider-tab active" id="tabOpenAI" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.28 9.88a5.36 5.36 0 0 0-.46-4.4 5.44 5.44 0 0 0-5.85-2.6A5.36 5.36 0 0 0 12 1a5.44 5.44 0 0 0-5.19 3.77 5.36 5.36 0 0 0-3.57 2.6 5.44 5.44 0 0 0 .67 6.38 5.36 5.36 0 0 0 .46 4.4 5.44 5.44 0 0 0 5.85 2.6A5.36 5.36 0 0 0 12 23a5.44 5.44 0 0 0 5.19-3.77 5.36 5.36 0 0 0 3.57-2.6 5.44 5.44 0 0 0-.48-6.75zM12 21.08a4.03 4.03 0 0 1-2.59-.94l.13-.07 4.3-2.48a.71.71 0 0 0 .36-.62v-6.07l1.82 1.05a.07.07 0 0 1 .04.05v5.02A4.06 4.06 0 0 1 12 21.08zm-8.7-3.73a4.03 4.03 0 0 1-.48-2.71l.13.08 4.3 2.48a.71.71 0 0 0 .71 0l5.25-3.03v2.1a.07.07 0 0 1-.03.06L8.85 18.6a4.06 4.06 0 0 1-5.55-1.25zm-1.13-9.4A4.03 4.03 0 0 1 4.3 5.8v5.11a.71.71 0 0 0 .36.62l5.24 3.03-1.82 1.05a.07.07 0 0 1-.07 0L3.6 13.1a4.06 4.06 0 0 1-.43-5.15zm14.95 3.5-5.25-3.03 1.82-1.05a.07.07 0 0 1 .07 0l4.42 2.55a4.04 4.04 0 0 1-.63 7.3V11.1a.71.71 0 0 0-.43-.65zm1.81-2.73-.13-.08-4.3-2.48a.71.71 0 0 0-.71 0L8.54 9.19V7.09a.07.07 0 0 1 .03-.06l4.42-2.55a4.04 4.04 0 0 1 6 3.74zM7.41 12.94l-1.82-1.05a.07.07 0 0 1-.04-.05V6.82a4.04 4.04 0 0 1 6.63-3.1l-.13.07-4.3 2.48a.71.71 0 0 0-.36.62l.02 6.05zm.99-2.13 2.34-1.35 2.34 1.35v2.7l-2.34 1.35-2.34-1.35v-2.7z"/></svg>
+          OpenAI
+        </button>
+        <button class="provider-tab" id="tabIdeogram" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+          Ideogram
+        </button>
+      </div>
+      <p class="provider-note" id="providerNote">OpenAI: редагує ваше реальне фото кімнати, додаючи меблі.</p>
+    </div>
+
     <button class="btn-gen" id="generateBtn" disabled>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
@@ -312,6 +357,10 @@ function bindEvents() {
   $('generateBtn').addEventListener('click', runGeneration);
   $('tryAgainBtn').addEventListener('click', resetToUpload);
   $('saveBtn').addEventListener('click', saveResult);
+
+  // Provider tabs
+  $('tabOpenAI').addEventListener('click', () => setProvider('openai'));
+  $('tabIdeogram').addEventListener('click', () => setProvider('ideogram'));
 }
 
 function handleFile(file) {
@@ -343,11 +392,12 @@ function showPreview(dataUrl) {
 
 function setFormVisible(v) {
   const show = v ? '' : 'none';
-  $('prodCard').style.display   = show;
-  $('slabel').style.display     = show;
-  $('dropZone').style.display   = show;
-  $('generateBtn').style.display= show;
-  $('disclaimer').style.display = show;
+  $('prodCard').style.display     = show;
+  $('slabel').style.display       = show;
+  $('dropZone').style.display     = show;
+  $('providerWrap').style.display = show;
+  $('generateBtn').style.display  = show;
+  $('disclaimer').style.display   = show;
 }
 
 function resetToUpload() {
@@ -370,6 +420,16 @@ function saveResult() {
   a.href = `data:${img._mime||'image/png'};base64,${img._b64}`;
   a.download = `omelyan-tryon-${Date.now()}.jpg`;
   a.click();
+}
+
+// ── PROVIDER SWITCH ─────────────────────────────────────────────────────────
+function setProvider(p) {
+  aiProvider = p;
+  $('tabOpenAI').classList.toggle('active', p === 'openai');
+  $('tabIdeogram').classList.toggle('active', p === 'ideogram');
+  $('providerNote').textContent = p === 'openai'
+    ? 'OpenAI: редагує ваше реальне фото кімнати, додаючи меблі.'
+    : 'Ideogram: генерує нове зображення інтер\'єру з меблями на основі вашого фото.';
 }
 
 // ── GENERATION ─────────────────────────────────────────────────────────────
@@ -398,12 +458,9 @@ async function runGeneration() {
 
   try {
     const photos = product.photos || (product.photo ? [product.photo] : []);
-    const sizes  = product.sizes ? product.sizes.map(s => s.size).join(', ') : '';
-
-    // ── КРОК 1: GPT-4o описує товар детально ──────────────────────────────
     const prodB64 = await fetchB64(photos[0]);
-    const roomB64 = roomDataUrl.split(',')[1];
 
+    // ── КРОК 1: GPT-4o описує товар ──────────────────────────────────────
     const descResp = await fetch('/api/openai-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -423,59 +480,86 @@ async function runGeneration() {
       const e = await descResp.json().catch(() => ({}));
       throw new Error(e.error?.message || `GPT-4o помилка (${descResp.status})`);
     }
-    const descData   = await descResp.json();
+    const descData = await descResp.json();
     const furnitureDesc = descData.choices[0].message.content.trim();
     console.log('Furniture description:', furnitureDesc);
 
-    // ── КРОК 2: gpt-image-1 Edit — редагує РЕАЛЬНЕ фото кімнати ───────────
-    // Ресайз до макс 1024px щоб вкластись в ліміт Vercel 4.5MB
-    const roomPngBlob = await new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 1024;
-        let w = img.naturalWidth, h = img.naturalHeight;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else       { w = Math.round(w * MAX / h); h = MAX; }
+    let imgB64, imgMime;
+
+    if (aiProvider === 'openai') {
+      // ── OpenAI: gpt-image-1 Edit ────────────────────────────────────────
+      const roomPngBlob = await resizeToBlob(roomDataUrl, 1024);
+      const editPrompt = `Add the following furniture item naturally into this room photo. Keep the room EXACTLY as it is — same walls, floor, lighting, perspective, existing furniture. Only ADD the new furniture piece. Do not change anything else in the room. Place it in a natural, realistic position. Furniture to add: ${furnitureDesc}`;
+
+      const fd = new FormData();
+      fd.append('model', 'gpt-image-1');
+      fd.append('image[]', roomPngBlob, 'room.png');
+      fd.append('prompt', editPrompt);
+      fd.append('n', '1');
+      fd.append('size', '1024x1024');
+
+      const editResp = await fetch('/api/openai-image-edit', { method: 'POST', body: fd });
+      if (!editResp.ok) {
+        const e = await editResp.json().catch(() => ({}));
+        throw new Error(e.error?.message || `OpenAI Edit API помилка (${editResp.status})`);
+      }
+      const editData = await editResp.json();
+      imgB64 = editData.data?.[0]?.b64_json;
+      imgMime = 'image/png';
+      if (!imgB64) throw new Error('Зображення не згенеровано. Спробуйте ще раз.');
+
+    } else {
+      // ── Ideogram: generate ──────────────────────────────────────────────
+      const roomB64 = roomDataUrl.split(',')[1];
+      const roomMime = roomDataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+
+      const ideogramPrompt = `Interior design photo. A well-lit, realistic room with the following furniture naturally placed inside: ${furnitureDesc}. The room should look like a real home interior. Photorealistic, high quality.`;
+
+      const ideogramBody = {
+        image_request: {
+          prompt: ideogramPrompt,
+          model: 'V_2',
+          magic_prompt_option: 'AUTO',
+          style_type: 'REALISTIC',
+          image_resolution: 'RESOLUTION_1024_1024',
+          image_weight: 50,
+          image: `data:${roomMime};base64,${roomB64}`,
         }
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        c.getContext('2d').drawImage(img, 0, 0, w, h);
-        c.toBlob(resolve, 'image/png');
       };
-      img.src = roomDataUrl;
-    });
 
-    const editPrompt = `Add the following furniture item naturally into this room photo. Keep the room EXACTLY as it is — same walls, floor, lighting, perspective, existing furniture. Only ADD the new furniture piece. Do not change anything else in the room. Place it in a natural, realistic position. Furniture to add: ${furnitureDesc}`;
+      const ideResp = await fetch('/api/ideogram-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ideogramBody)
+      });
+      if (!ideResp.ok) {
+        const e = await ideResp.json().catch(() => ({}));
+        throw new Error(e.errorMessage || e.error || `Ideogram API помилка (${ideResp.status})`);
+      }
+      const ideData = await ideResp.json();
+      const imgUrl = ideData.data?.[0]?.url;
+      if (!imgUrl) throw new Error('Ideogram не повернув зображення. Спробуйте ще раз.');
 
-    const fd = new FormData();
-    fd.append('model', 'gpt-image-1');
-    fd.append('image[]', roomPngBlob, 'room.png');
-    fd.append('prompt', editPrompt);
-    fd.append('n', '1');
-    fd.append('size', '1024x1024');
-
-    const editResp = await fetch('/api/openai-image-edit', {
-      method: 'POST',
-      body: fd
-    });
-
-    if (!editResp.ok) {
-      const e = await editResp.json().catch(() => ({}));
-      throw new Error(e.error?.message || `Edit API помилка (${editResp.status})`);
+      // Fetch the generated image and convert to base64
+      const imgResp = await fetch(imgUrl);
+      const imgBlob = await imgResp.blob();
+      imgMime = imgBlob.type || 'image/jpeg';
+      imgB64 = await new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = e => res(e.target.result.split(',')[1]);
+        fr.onerror = rej;
+        fr.readAsDataURL(imgBlob);
+      });
     }
-    const editData = await editResp.json();
-    const imgB64   = editData.data?.[0]?.b64_json;
-    if (!imgB64) throw new Error('Зображення не згенеровано. Спробуйте ще раз.');
 
     clearInterval(progT); clearInterval(msgT);
     bar.style.width = '100%';
     await new Promise(r => setTimeout(r, 350));
 
     const resImg = $('resultImage');
-    resImg.src = `data:image/png;base64,${imgB64}`;
+    resImg.src = `data:${imgMime};base64,${imgB64}`;
     resImg._b64  = imgB64;
-    resImg._mime = 'image/png';
+    resImg._mime = imgMime;
     resImg.onload = () => {
       $('loaderSec').style.display = 'none';
       $('resultSec').style.display = 'flex';
