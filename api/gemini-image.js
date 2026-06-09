@@ -11,8 +11,9 @@ export default async function handler(req, res) {
     try {
       const { prompt, imageBase64, imageMime } = req.body;
   
-      // Use Gemini 2.0 Flash image generation (imagen-3 via generateContent with image output)
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
+      // gemini-2.5-flash-image is the current stable image generation model (June 2026)
+      const model = 'gemini-2.5-flash-image';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   
       const requestBody = {
         contents: [
@@ -44,17 +45,17 @@ export default async function handler(req, res) {
       const data = await response.json();
   
       if (!response.ok) {
-        console.error('Gemini API error:', data);
+        console.error('Gemini API error:', JSON.stringify(data));
         return res.status(response.status).json({ error: data.error?.message || 'Gemini API error' });
       }
   
-      // Extract image from response
+      // Extract image from response parts
       const parts = data.candidates?.[0]?.content?.parts || [];
       const imagePart = parts.find(p => p.inline_data?.mime_type?.startsWith('image/'));
   
       if (!imagePart) {
-        console.error('No image in Gemini response:', JSON.stringify(data).slice(0, 500));
-        return res.status(500).json({ error: 'Gemini не повернув зображення' });
+        console.error('No image in Gemini response, parts:', JSON.stringify(parts).slice(0, 500));
+        return res.status(500).json({ error: 'Gemini не повернув зображення. Спробуйте ще раз.' });
       }
   
       return res.status(200).json({
