@@ -127,7 +127,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const OPENAI_KEY = "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";
+// API key is stored securely in Vercel Environment Variables (OPENAI_API_KEY)
+// All OpenAI requests go through /api/* proxy routes
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7oAJfQ1gA0Ax5A4bDejvNkIBC6Pm0i3E",
@@ -404,9 +405,9 @@ async function runGeneration() {
     const prodB64 = await fetchB64(photos[0]);
     const roomB64 = roomDataUrl.split(',')[1];
 
-    const descResp = await fetch('https://api.openai.com/v1/chat/completions', {
+    const descResp = await fetch('/api/openai-chat', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'gpt-4o',
         max_tokens: 300,
@@ -449,9 +450,8 @@ async function runGeneration() {
     fd.append('n', '1');
     fd.append('size', '1024x1024');
 
-    const editResp = await fetch('https://api.openai.com/v1/images/edits', {
+    const editResp = await fetch('/api/openai-image-edit', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${OPENAI_KEY}` },
       body: fd
     });
 
