@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Приміряти вдома ✨ | Omelyan Mebli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#7c3aed;--purple-l:#a78bfa;--blue:#3b82f6;
+  --grad:linear-gradient(135deg,#7c3aed 0%,#3b82f6 100%);
+  --bg:#0f0f13;--s1:#18181f;--s2:#22222c;
+  --border:rgba(255,255,255,.08);--text:#f1f0ff;--muted:#8b8ba0;
+  --r:16px;--rs:10px;--font:'Inter',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
+
+.hdr{position:sticky;top:0;z-index:100;background:rgba(15,15,19,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px}
+.hdr-logo{font-size:1rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-sub{font-size:.78rem;color:var(--muted)}
+.ai-badge{margin-left:auto;background:var(--s2);border:1px solid rgba(124,58,237,.3);color:var(--purple-l);font-size:.7rem;font-weight:700;letter-spacing:.05em;padding:4px 10px;border-radius:99px;flex-shrink:0}
+
+.page{max-width:540px;margin:0 auto;padding:0 16px 48px}
+
+/* INITIAL LOADER */
+.init-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;gap:18px;text-align:center}
+.init-spinner{width:40px;height:40px;border:3px solid var(--s2);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+.init-txt{font-size:.88rem;color:var(--muted)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PRODUCT CARD */
+.prod-card{display:flex;gap:14px;align-items:flex-start;background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-top:20px}
+.prod-img{width:84px;height:84px;object-fit:cover;border-radius:var(--rs);flex-shrink:0;background:var(--s2)}
+.prod-name{font-size:1rem;font-weight:600;line-height:1.35;margin-bottom:5px}
+.prod-desc{font-size:.78rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.prod-tag{display:inline-block;margin-top:7px;font-size:.68rem;font-weight:600;color:var(--purple-l);background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2);padding:3px 9px;border-radius:99px}
+
+/* SECTION LABEL */
+.slabel{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:24px 0 10px}
+
+/* DROP ZONE */
+.drop{position:relative;background:var(--s1);border:2px dashed rgba(124,58,237,.3);border-radius:var(--r);min-height:188px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;padding:28px 20px;cursor:pointer;transition:border-color .2s,background .2s;text-align:center;overflow:hidden}
+.drop:hover,.drop.over{border-color:var(--purple);background:rgba(124,58,237,.06)}
+.drop-icon{width:52px;height:52px;background:rgba(124,58,237,.12);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.drop-title{font-size:.92rem;font-weight:600}
+.drop-sub{font-size:.76rem;color:var(--muted)}
+.drop-btn{background:var(--s2);border:1px solid rgba(124,58,237,.3);color:var(--purple-l);font-size:.79rem;font-weight:600;font-family:var(--font);padding:8px 18px;border-radius:99px;cursor:pointer;transition:background .2s,border-color .2s}
+.drop-btn:hover{background:rgba(124,58,237,.15);border-color:var(--purple)}
+#fileInput{display:none}
+.room-prev{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:calc(var(--r) - 2px)}
+.room-prev-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);border-radius:calc(var(--r) - 2px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+.drop:hover .room-prev-ov{opacity:1}
+.room-prev-ov span{background:rgba(255,255,255,.14);backdrop-filter:blur(6px);color:#fff;font-size:.8rem;font-weight:600;padding:8px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.2)}
+
+.btn-gen{width:100%;margin-top:14px;background:var(--grad);border:none;color:#fff;font-family:var(--font);font-size:1rem;font-weight:700;padding:16px 24px;border-radius:var(--r);cursor:pointer;transition:opacity .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-gen:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+.btn-gen:active:not(:disabled){transform:translateY(0)}
+.btn-gen:disabled{opacity:.35;cursor:not-allowed}
+.disclaimer{font-size:.68rem;color:var(--muted);text-align:center;line-height:1.5;padding:0 8px;margin-top:6px}
+
+/* LOADER */
+#loaderSec{display:none;flex-direction:column;align-items:center;padding:44px 20px;text-align:center;gap:24px}
+.l-ring{position:relative;width:76px;height:76px}
+.l-ring svg{position:absolute;inset:0;width:100%;height:100%;animation:spin 1.4s linear infinite}
+.l-ring svg circle{fill:none;stroke:url(#gStroke);stroke-width:4;stroke-linecap:round;stroke-dasharray:180;stroke-dashoffset:40}
+.l-dots{display:flex;gap:6px;align-items:center}
+.l-dot{width:8px;height:8px;border-radius:50%;background:var(--grad);animation:pdot 1.2s ease-in-out infinite}
+.l-dot:nth-child(2){animation-delay:.2s}.l-dot:nth-child(3){animation-delay:.4s}
+@keyframes pdot{0%,100%{transform:scale(.6);opacity:.4}50%{transform:scale(1.2);opacity:1}}
+.l-txt{font-size:.92rem;color:var(--muted);line-height:1.6;max-width:260px}
+.l-txt strong{display:block;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.l-msg{font-style:italic;transition:opacity .25s}
+.l-prog{width:190px;height:3px;background:var(--s2);border-radius:99px;overflow:hidden}
+.l-prog-bar{height:100%;background:var(--grad);border-radius:99px;width:0%;transition:width .5s ease}
+
+/* RESULT */
+#resultSec{display:none;flex-direction:column;gap:14px;padding-bottom:8px}
+.res-label{display:flex;align-items:center;gap:8px;font-size:.83rem;font-weight:600;color:var(--muted);margin-top:18px}
+.res-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.res-img-wrap{border-radius:var(--r);overflow:hidden;background:var(--s1);border:1px solid var(--border)}
+#resultImage{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain}
+.res-actions{display:flex;flex-direction:column;gap:10px}
+.btn-sec{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:.9rem;font-weight:600;padding:14px 20px;border-radius:var(--r);cursor:pointer;transition:background .2s,border-color .2s}
+.btn-sec:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15)}
+.btn-outline{width:100%;background:transparent;border:1px solid rgba(124,58,237,.35);color:var(--purple-l);font-family:var(--font);font-size:.9rem;font-weight:600;padding:14px 20px;border-radius:var(--r);cursor:pointer;transition:background .2s,border-color .2s}
+.btn-outline:hover{background:rgba(124,58,237,.08);border-color:var(--purple)}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e1e28;border:1px solid rgba(239,68,68,.3);color:#fca5a5;font-size:.83rem;font-weight:500;padding:12px 20px;border-radius:var(--rs);max-width:calc(100vw - 40px);text-align:center;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;z-index:999;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+@media(min-width:560px){.page{padding:0 24px 60px}.prod-img{width:96px;height:96px}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div>
+    <div class="hdr-logo">Omelyan Mebli</div>
+    <div class="hdr-sub">Приміряти вдома</div>
+  </div>
+  <span class="ai-badge">AI ✨</span>
+</header>
+
+<main class="page" id="page">
+  <div class="init-wrap" id="initLoader">
+    <div class="init-spinner"></div>
+    <p class="init-txt">Завантажуємо товар...</p>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<svg width="0" height="0" style="position:absolute;pointer-events:none">
+  <defs>
+    <linearGradient id="gStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const OPENAI_KEY = "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";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB7oAJfQ1gA0Ax5A4bDejvNkIBC6Pm0i3E",
+  authDomain: "omelyan-mebli.firebaseapp.com",
+  databaseURL: "https://omelyan-mebli-default-rtdb.firebaseio.com",
+  projectId: "omelyan-mebli",
+  storageBucket: "omelyan-mebli.firebasestorage.app",
+  messagingSenderId: "641735622345",
+  appId: "1:641735622345:web:533cbfce51c7745505d718"
+};
+
+const LOADER_MSGS = [
+  "Аналізуємо кімнату...",
+  "Вивчаємо освітлення та перспективу...",
+  "Підбираємо оптимальне розміщення...",
+  "Інтегруємо меблі в інтер'єр...",
+  "Фінальні штрихи...",
+];
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+let product     = null;
+let roomFile    = null;
+let roomDataUrl = null;
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const toast = msg => {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4200);
+};
+
+function urlToBase64(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      resolve(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    };
+    img.onerror = () => reject(new Error('CORS'));
+    img.src = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+  });
+}
+
+async function fetchB64(url) {
+  try { return await urlToBase64(url); } catch {}
+  // fallback via fetch (works if server allows)
+  const r = await fetch(url);
+  const blob = await r.blob();
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = e => res(e.target.result.split(',')[1]);
+    fr.onerror = rej;
+    fr.readAsDataURL(blob);
+  });
+}
+
+// ── LOAD RANDOM PRODUCT FROM FIREBASE ─────────────────────────────────────
+async function loadRandomProduct() {
+  const snap = await get(ref(db, 'products'));
+  if (!snap.exists()) throw new Error('База даних порожня');
+
+  const all = snap.val();
+  // Flatten — products can be at root or nested under categories
+  const list = [];
+  for (const [k, v] of Object.entries(all)) {
+    if (v && typeof v === 'object') {
+      // check if it's a product (has 'name') or a category (values are products)
+      if (v.name) {
+        list.push({ id: k, ...v });
+      } else {
+        for (const [id2, prod] of Object.entries(v)) {
+          if (prod && prod.name) list.push({ id: id2, ...prod });
+        }
+      }
+    }
+  }
+
+  if (!list.length) throw new Error('Товари не знайдено');
+
+  // Pick random that has at least one photo
+  const withPhoto = list.filter(p => {
+    const photos = p.photos || (p.photo ? [p.photo] : []);
+    return photos.length > 0;
+  });
+  if (!withPhoto.length) throw new Error('Немає товарів з фото');
+
+  return withPhoto[Math.floor(Math.random() * withPhoto.length)];
+}
+
+// ── RENDER PAGE ────────────────────────────────────────────────────────────
+function renderPage() {
+  const photos   = product.photos || (product.photo ? [product.photo] : []);
+  const firstPic = photos[0] || '';
+  const sizes    = product.sizes ? product.sizes.map(s => s.size).join(', ') : '';
+
+  $('page').innerHTML = `
+    <div class="prod-card" id="prodCard">
+      <img class="prod-img" src="${firstPic}" alt="${product.name}" onerror="this.style.opacity='.3'">
+      <div>
+        <p class="prod-name">${product.name}</p>
+        <p class="prod-desc">${product.description || ''}</p>
+        ${sizes ? `<span class="prod-tag">${sizes}</span>` : ''}
+      </div>
+    </div>
+
+    <p class="slabel" id="slabel">Фото вашої кімнати</p>
+    <div class="drop" id="dropZone" role="button" tabindex="0">
+      <div class="drop-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,1)" stroke-width="1.8">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <p class="drop-title">Перетягніть або оберіть фото кімнати</p>
+      <p class="drop-sub">JPG, PNG, WEBP — до 10 МБ</p>
+      <button class="drop-btn" type="button" id="browseBtn">Вибрати файл</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+
+    <button class="btn-gen" id="generateBtn" disabled>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+      </svg>
+      Згенерувати ✨
+    </button>
+    <p class="disclaimer" id="disclaimer">Результат генерується ШІ — лише для ознайомлення.</p>
+
+    <section id="loaderSec">
+      <div class="l-ring">
+        <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34"/></svg>
+      </div>
+      <div class="l-dots">
+        <div class="l-dot"></div><div class="l-dot"></div><div class="l-dot"></div>
+      </div>
+      <div class="l-txt">
+        <strong>Omelyan AI працює...</strong>
+        <span class="l-msg" id="loaderMsg">Аналізуємо кімнату...</span>
+      </div>
+      <div class="l-prog"><div class="l-prog-bar" id="progBar"></div></div>
+    </section>
+
+    <section id="resultSec">
+      <p class="res-label">✨ Ваш результат</p>
+      <div class="res-img-wrap">
+        <img id="resultImage" src="" alt="Результат AI">
+      </div>
+      <div class="res-actions">
+        <button class="btn-sec" id="tryAgainBtn">Спробувати інше фото</button>
+        <button class="btn-outline" id="saveBtn">Зберегти зображення</button>
+      </div>
+    </section>
+  `;
+
+  bindEvents();
+}
+
+// ── EVENTS ─────────────────────────────────────────────────────────────────
+function bindEvents() {
+  const drop  = $('dropZone');
+  const input = $('fileInput');
+
+  $('browseBtn').addEventListener('click', e => { e.stopPropagation(); input.click(); });
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') input.click(); });
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('over');
+    const f = e.dataTransfer?.files?.[0]; if (f) handleFile(f);
+  });
+  input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0]); });
+
+  $('generateBtn').addEventListener('click', runGeneration);
+  $('tryAgainBtn').addEventListener('click', resetToUpload);
+  $('saveBtn').addEventListener('click', saveResult);
+}
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) { toast('Будь ласка, оберіть зображення'); return; }
+  if (file.size > 10*1024*1024) { toast('Файл занадто великий (макс. 10 МБ)'); return; }
+  roomFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    roomDataUrl = e.target.result;
+    showPreview(e.target.result);
+    $('generateBtn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPreview(dataUrl) {
+  const drop = $('dropZone');
+  drop.querySelector('.room-prev')?.remove();
+  drop.querySelector('.room-prev-ov')?.remove();
+  const img = Object.assign(document.createElement('img'), {
+    src: dataUrl, className: 'room-prev', alt: 'Фото кімнати'
+  });
+  const ov = document.createElement('div');
+  ov.className = 'room-prev-ov';
+  ov.innerHTML = '<span>Змінити фото</span>';
+  drop.appendChild(img); drop.appendChild(ov);
+  drop.style.minHeight = '170px';
+}
+
+function setFormVisible(v) {
+  const show = v ? '' : 'none';
+  $('prodCard').style.display   = show;
+  $('slabel').style.display     = show;
+  $('dropZone').style.display   = show;
+  $('generateBtn').style.display= show;
+  $('disclaimer').style.display = show;
+}
+
+function resetToUpload() {
+  $('resultSec').style.display = 'none';
+  const drop = $('dropZone');
+  drop.querySelector('.room-prev')?.remove();
+  drop.querySelector('.room-prev-ov')?.remove();
+  drop.style.minHeight = '';
+  roomFile = null; roomDataUrl = null;
+  $('fileInput').value = '';
+  $('generateBtn').disabled = true;
+  setFormVisible(true);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function saveResult() {
+  const img = $('resultImage');
+  if (!img._b64) return;
+  const a = document.createElement('a');
+  a.href = `data:${img._mime||'image/png'};base64,${img._b64}`;
+  a.download = `omelyan-tryon-${Date.now()}.jpg`;
+  a.click();
+}
+
+// ── GENERATION ─────────────────────────────────────────────────────────────
+async function runGeneration() {
+  if (!roomDataUrl) { toast('Завантажте фото кімнати'); return; }
+
+  setFormVisible(false);
+  $('resultSec').style.display = 'none';
+  $('loaderSec').style.display = 'flex';
+
+  let prog = 0, msgIdx = 0;
+  const msgEl = $('loaderMsg');
+  const bar   = $('progBar');
+  bar.style.width = '0%';
+  msgEl.textContent = LOADER_MSGS[0];
+
+  const progT = setInterval(() => {
+    prog = Math.min(prog + (prog<40?2:prog<70?1:prog<88?.4:.1), 91);
+    bar.style.width = prog + '%';
+  }, 600);
+  const msgT = setInterval(() => {
+    msgIdx = (msgIdx+1) % LOADER_MSGS.length;
+    msgEl.style.opacity = '0';
+    setTimeout(() => { msgEl.textContent = LOADER_MSGS[msgIdx]; msgEl.style.opacity = '1'; }, 250);
+  }, 7000);
+
+  try {
+    const photos = product.photos || (product.photo ? [product.photo] : []);
+    const sizes  = product.sizes ? product.sizes.map(s => s.size).join(', ') : '';
+
+    // ── КРОК 1: GPT-4o описує товар детально ──────────────────────────────
+    const prodB64 = await fetchB64(photos[0]);
+    const roomB64 = roomDataUrl.split(',')[1];
+
+    const descResp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${prodB64}`, detail: 'high' } },
+            { type: 'text', text: `Describe this furniture product in 2-3 sentences for an image editing AI. Include: exact color, material/fabric texture, shape, style, legs, cushions, dimensions. Product name: "${product.name}"${product.description ? ', ' + product.description : ''}. Return ONLY the description, no extra text.` }
+          ]
+        }]
+      })
+    });
+    if (!descResp.ok) {
+      const e = await descResp.json().catch(() => ({}));
+      throw new Error(e.error?.message || `GPT-4o помилка (${descResp.status})`);
+    }
+    const descData   = await descResp.json();
+    const furnitureDesc = descData.choices[0].message.content.trim();
+    console.log('Furniture description:', furnitureDesc);
+
+    // ── КРОК 2: gpt-image-1 Edit — редагує РЕАЛЬНЕ фото кімнати ───────────
+    // Конвертуємо кімнату в PNG Blob (Edit API вимагає PNG)
+    const roomPngBlob = await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        c.toBlob(resolve, 'image/png');
+      };
+      img.src = roomDataUrl;
+    });
+
+    const editPrompt = `Add the following furniture item naturally into this room photo. Keep the room EXACTLY as it is — same walls, floor, lighting, perspective, existing furniture. Only ADD the new furniture piece. Do not change anything else in the room. Place it in a natural, realistic position. Furniture to add: ${furnitureDesc}`;
+
+    const fd = new FormData();
+    fd.append('model', 'gpt-image-1');
+    fd.append('image[]', roomPngBlob, 'room.png');
+    fd.append('prompt', editPrompt);
+    fd.append('n', '1');
+    fd.append('size', '1024x1024');
+
+    const editResp = await fetch('https://api.openai.com/v1/images/edits', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${OPENAI_KEY}` },
+      body: fd
+    });
+
+    if (!editResp.ok) {
+      const e = await editResp.json().catch(() => ({}));
+      throw new Error(e.error?.message || `Edit API помилка (${editResp.status})`);
+    }
+    const editData = await editResp.json();
+    const imgB64   = editData.data?.[0]?.b64_json;
+    if (!imgB64) throw new Error('Зображення не згенеровано. Спробуйте ще раз.');
+
+    clearInterval(progT); clearInterval(msgT);
+    bar.style.width = '100%';
+    await new Promise(r => setTimeout(r, 350));
+
+    const resImg = $('resultImage');
+    resImg.src = `data:image/png;base64,${imgB64}`;
+    resImg._b64  = imgB64;
+    resImg._mime = 'image/png';
+    resImg.onload = () => {
+      $('loaderSec').style.display = 'none';
+      $('resultSec').style.display = 'flex';
+      $('resultSec').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+  } catch(err) {
+    clearInterval(progT); clearInterval(msgT);
+    console.error(err);
+    $('loaderSec').style.display = 'none';
+    toast(err.message || 'Щось пішло не так. Спробуйте ще раз.');
+    setFormVisible(true);
+  }
+}
+
+// ── START ──────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    product = await loadRandomProduct();
+    renderPage();
+  } catch(err) {
+    console.error(err);
+    $('page').innerHTML = `
+      <div class="init-wrap">
+        <p style="color:#fca5a5;font-size:.9rem">${err.message || 'Не вдалося завантажити товар'}</p>
+        <button onclick="location.reload()" style="margin-top:12px;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:var(--font);padding:10px 20px;border-radius:var(--rs);cursor:pointer">Спробувати ще раз</button>
+      </div>`;
+  }
+})();
+</script>
+</body>
+</html>
