@@ -127,8 +127,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-// API key is stored securely in Vercel Environment Variables (OPENAI_API_KEY)
-// All OpenAI requests go through /api/* proxy routes
+// API key stored in Vercel Environment Variables
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7oAJfQ1gA0Ax5A4bDejvNkIBC6Pm0i3E",
@@ -429,13 +428,19 @@ async function runGeneration() {
     console.log('Furniture description:', furnitureDesc);
 
     // ── КРОК 2: gpt-image-1 Edit — редагує РЕАЛЬНЕ фото кімнати ───────────
-    // Конвертуємо кімнату в PNG Blob (Edit API вимагає PNG)
+    // Ресайз до макс 1024px щоб вкластись в ліміт Vercel 4.5MB
     const roomPngBlob = await new Promise(resolve => {
       const img = new Image();
       img.onload = () => {
+        const MAX = 1024;
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else       { w = Math.round(w * MAX / h); h = MAX; }
+        }
         const c = document.createElement('canvas');
-        c.width = img.naturalWidth; c.height = img.naturalHeight;
-        c.getContext('2d').drawImage(img, 0, 0);
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
         c.toBlob(resolve, 'image/png');
       };
       img.src = roomDataUrl;
