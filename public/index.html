@@ -94,7 +94,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* PROVIDER SELECTOR */
 .provider-wrap{margin-top:20px}
 .provider-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.provider-tabs{display:flex;gap:8px}
+.provider-tabs{display:flex;gap:8px;flex-wrap:wrap}
 .provider-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 10px;border-radius:var(--rs);border:1px solid var(--border);background:var(--s1);cursor:pointer;transition:all .2s;font-size:.82rem;font-weight:600;color:var(--muted);font-family:var(--font)}
 .provider-tab:hover{border-color:rgba(124,58,237,.4);color:var(--text)}
 .provider-tab.active{border-color:var(--purple);background:rgba(124,58,237,.12);color:var(--purple-l)}
@@ -165,7 +165,7 @@ const db  = getDatabase(app);
 let product     = null;
 let roomFile    = null;
 let roomDataUrl = null;
-let aiProvider  = 'openai'; // 'openai' | 'ideogram'
+let aiProvider  = 'openai'; // 'openai' | 'ideogram' | 'gemini'
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -297,6 +297,10 @@ function renderPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
           Ideogram
         </button>
+        <button class="provider-tab" id="tabGemini" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" opacity="0"/><path d="M12 1C5.93 1 1 5.93 1 12s4.93 11 11 11 11-4.93 11-11S18.07 1 12 1zm0 2c1.9 0 3.64.63 5.05 1.68L4.68 17.05A8.96 8.96 0 0 1 3 12c0-4.97 4.03-9 9-9zm0 18c-1.9 0-3.64-.63-5.05-1.68L19.32 6.95A8.96 8.96 0 0 1 21 12c0 4.97-4.03 9-9 9z"/></svg>
+          Gemini
+        </button>
       </div>
       <p class="provider-note" id="providerNote">OpenAI: редагує ваше реальне фото кімнати, додаючи меблі.</p>
     </div>
@@ -361,6 +365,7 @@ function bindEvents() {
   // Provider tabs
   $('tabOpenAI').addEventListener('click', () => setProvider('openai'));
   $('tabIdeogram').addEventListener('click', () => setProvider('ideogram'));
+  $('tabGemini').addEventListener('click', () => setProvider('gemini'));
 }
 
 function handleFile(file) {
@@ -427,9 +432,13 @@ function setProvider(p) {
   aiProvider = p;
   $('tabOpenAI').classList.toggle('active', p === 'openai');
   $('tabIdeogram').classList.toggle('active', p === 'ideogram');
-  $('providerNote').textContent = p === 'openai'
-    ? 'OpenAI: редагує ваше реальне фото кімнати, додаючи меблі.'
-    : 'Ideogram: генерує нове зображення інтер\'єру з меблями на основі вашого фото.';
+  $('tabGemini').classList.toggle('active', p === 'gemini');
+  const notes = {
+    openai:   'OpenAI: редагує ваше реальне фото кімнати, додаючи меблі.',
+    ideogram: 'Ideogram: генерує нове зображення інтер\'єру з меблями на основі вашого фото.',
+    gemini:   'Gemini 2.0: Google AI редагує фото кімнати, вставляючи меблі реалістично.',
+  };
+  $('providerNote').textContent = notes[p] || '';
 }
 
 // ── GENERATION ─────────────────────────────────────────────────────────────
@@ -508,8 +517,28 @@ async function runGeneration() {
       imgMime = 'image/png';
       if (!imgB64) throw new Error('Зображення не згенеровано. Спробуйте ще раз.');
 
+    } else if (aiProvider === 'gemini') {
+      // ── Gemini 2.0 Flash: image generation ─────────────────────────────
+      const roomB64  = roomDataUrl.split(',')[1];
+      const roomMime = roomDataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+
+      const geminiPrompt = `You are an interior design AI. Look at this room photo carefully. Add the following furniture naturally into the room. Keep the room EXACTLY as it is — same walls, floor, lighting, perspective, all existing furniture stays. Only ADD the new piece. Place it in a natural, realistic position. Output ONLY the edited room image. Furniture to add: ${furnitureDesc}`;
+
+      const gemResp = await fetch('/api/gemini-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: geminiPrompt, imageBase64: roomB64, imageMime: roomMime }),
+      });
+      if (!gemResp.ok) {
+        const e = await gemResp.json().catch(() => ({}));
+        throw new Error(e.error || `Gemini API помилка (${gemResp.status})`);
+      }
+      const gemData = await gemResp.json();
+      imgB64  = gemData.imageBase64;
+      imgMime = gemData.imageMime || 'image/png';
+      if (!imgB64) throw new Error('Gemini не повернув зображення. Спробуйте ще раз.');
+
     } else {
-      // ── Ideogram: generate ──────────────────────────────────────────────
       const roomB64 = roomDataUrl.split(',')[1];
       const roomMime = roomDataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
 
